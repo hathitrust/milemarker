@@ -31,7 +31,11 @@ Gem::Specification.new do |spec|
 
   # For more information and examples about making a new gem, checkout our
   # guide at: https://bundler.io/guides/creating_gem.html
+  #
+  # spec.add_dependency 'ougai', '~> 2.0' # Don't want to have compiled code (oj) as a dependency
 
-
+  spec.add_development_dependency 'rspec', '~> 3.0'
+  spec.add_development_dependency 'rubocop', '~> 1.7'
+  spec.add_development_dependency 'bundler', '~>2.0'
 
 end

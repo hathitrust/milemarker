@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 require_relative "ppnum"
+require 'logger'
+require 'socket'
+require 'json'
 
 # Naive waypoint class, to keep track of progress over time for long-running
 # processes for which you want to kick out log files with ongoing progress.
@@ -11,12 +14,16 @@ class Waypoint
               :start_time, :batch_start_time, :batch_end_time,
               :count, :prev_count
 
-  def initialize(batch_size: 100, name: nil, logger: nil)
+  # Create a new waypoint tracker, with an optional name
+  def initialize(batch_size: 1000, name: nil, logger: nil)
     @batch_size_target  = batch_size
+    @name = name
+    @logger = logger
+
     @last_batch_divsor  = 0
     @last_batch_size    = 0
     @last_batch_seconds = 0
-    @name = name
+
 
     @start_time       = Time.now
     @batch_start_time = @start_time
@@ -29,6 +36,10 @@ class Waypoint
   def incr(increase = 1)
     @count += increase
     self
+  end
+
+  def create_logger!(*args, **kwargs)
+    @logger = Logger.new(*args, **kwargs)
   end
 
   def on_batch
@@ -110,9 +121,9 @@ class Waypoint
     log(final_line, level: level)
   end
 
-  def increment_and_report(level: :info)
+  def increment_and_log(level: :info)
     self.incr
-    log_batch_line(level)
+    log_batch_line(level: level)
   end
 
   def seconds_to_time_string(sec)
@@ -122,6 +133,26 @@ class Waypoint
   end
 
   class Structured < Waypoint
+
+    def create_logger!(*args, **kwargs)
+      super
+      @logger.formatter = proc do |severity, datetime, progname, msg|
+        case msg
+          when Hash
+            msg
+          when String
+            {msg: msg}
+          when Exception
+            {msg: msg.message, error: msg.class, at: msg.backtrace&.first, hostname: Socket.gethostname}
+          else
+            if msg.respond_to? :to_h
+              msg.to_h
+            else
+              {msg: msg.inspect}
+            end
+        end.merge({level: severity, time: datetime}).to_json
+      end
+    end
 
     def batch_line
       {
