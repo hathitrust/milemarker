@@ -33,14 +33,19 @@ logger.info wp.final_line
 
 ```
 
-### Letting waypoint use a logger
+### Incorporating a logger into waypoint
 
-For basic cases, you can also pass in a logger, or let waypoint create
-one for its own use base on an IO-like object you provide
+For standard logging cases, you can also pass in a logger, or let waypoint 
+create one for its own use based on an IO-like object you provide
 
 ```ruby
 logger = Logger.new(STDERR)
 wp = Waypoint.new(name: 'my_process', batch_size: 10_000, logger: logger)
+
+# same thing
+wp = Waypoint.new(name: 'my_process', batch_size: 10_000)
+wp.logger = logger
+
 # same thing
 wp = Waypoint.new(name: 'my_process', batch_size: 10_000)
 wp.create_logger!(STDERR)
@@ -61,7 +66,7 @@ a logger that provides json lines instead of text, too.
 
 Presumably, if you pass in a logger you'll use something like
 [semantic_logger](https://github.com/reidmorrison/semantic_logger) 
-or [ougai](https://github.com/tilfin/ougai)
+or [ougai](https://github.com/tilfin/ougai).
 
 ```ruby
 wp = Waypoint::Structured.new(name: 'my_process', batch_size: 10_000)
@@ -72,11 +77,37 @@ File.open(input_file).each do |line|
   wp.increment_and_log
 end
 
+# Usually one line; broken up for readability
 # {"name":"my_process","batch_count":10_000,"batch_seconds":97.502088,
 # "batch_rate":1.035875252230496,"total_count":100,"total_seconds":97.502094,
 # "total_rate":1.0358751884856956,"level":"INFO","time":"2021-11-06 17:32:21 -0400"}
 
 ```
+
+## Non-logging uses
+
+Note that since `wp.on_batch { block }` simply fires whenever `batch_size`
+calls to `#incr` have been recorded,  There's no reason one can't use this
+to, say, send a collected batch of data to a database.
+
+```ruby
+accum = []
+File.open(input_file).each do |line|
+  accum << transform_line(line)
+  wp.incr
+  wp.on_batch do
+    send_to_database(accum)
+    accum = []
+  end
+end
+
+```
+
+## Accuracy
+
+Note that `Waypoint` isn't designed for real benchmarking. 
+The assumption is that whatever work your code is actually
+doing will drown out any inefficiencies in the `Waypoint` code.
 
 ## Installation
 
