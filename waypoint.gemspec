@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require_relative "lib/waypoint/version"
+require_relative "lib/milemarker/version"
 
 Gem::Specification.new do |spec|
   spec.name          = "waypoint"
-  spec.version       = Waypoint::VERSION
+  spec.version       = Milemarker::VERSION
   spec.authors       = ["Bill Dueber"]
   spec.email         = ["bill@dueber.com"]
 
@@ -32,10 +32,12 @@ Gem::Specification.new do |spec|
   # For more information and examples about making a new gem, checkout our
   # guide at: https://bundler.io/guides/creating_gem.html
   #
-  # spec.add_dependency 'ougai', '~> 2.0' # Don't want to have compiled code (oj) as a dependency
 
+  spec.add_development_dependency 'rake', '~>13.0'
   spec.add_development_dependency 'rspec', '~> 3.0'
   spec.add_development_dependency 'rubocop', '~> 1.7'
   spec.add_development_dependency 'bundler', '~>2.0'
+  spec.add_development_dependency 'pry'
+
 
 end

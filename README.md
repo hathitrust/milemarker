@@ -1,28 +1,28 @@
 # Milemarker -- track (and presumably log) progress in batch jobs
 
-Never again write code of the form `log.info "Finished 1_000 in # {secs} 
-seconds at a rate of #{total / secs}"`. 
+Never again write code of the
+form `log.info "Finished 1_000 in #{secs} seconds at a rate of #{total.to_f / secs}"`
+.
 
 ## Usage
 
 ```ruby
 
-require 'waypoint'
+require 'milemarker'
 require 'logger'
 input_file = "records.ndj"
 
-# Create a new waypoint. Default batch_size is 1_000
-wp = Waypoint.new(name: "Load #{input_file}", batch_size: 1_000_000)
+# Create a new milemarker. Default batch_size is 1_000
+milemarker     = Milemarker.new(name: "Load #{input_file}", batch_size: 
+  1_000_000)
 logger = Logger.new(STDERR)
 
 File.open(input_file).each do |line|
   do_whatever_needs_doing(line)
-  wp.incr
-  # spit out a log line every batch_size records
-  wp.on_batch { logger.info wp.batch_line} 
+  milemarker.increment_and_on_batch { logger.info milemarker.batch_line }
 end
 
-logger.info wp.final_line
+logger.info milemarker.final_line
 
 # Sample output
 # ...
@@ -33,48 +33,96 @@ logger.info wp.final_line
 
 ```
 
-### Incorporating a logger into waypoint
+## Basic usage
 
-For standard logging cases, you can also pass in a logger, or let waypoint 
+The primary way most programs will use `milemarker` is via
+`#increment_and_on_batch {|milemarker| ... }` (or its counterpart 
+`#increment_and_log_batch_line`). As the name suggests, this will:
+
+* increment the batch counter
+* If the batch counter >= the batch size:
+  * run the provided block
+  * reset the batch count/time/etc.
+
+Some examples:
+
+```ruby
+
+# Logging, as above
+milemarker = Milemarker.new(batch_size: 1000, name: 'Logging')
+milemarker.increment_and_on_batch { logger.info milemarker.batch_line }
+
+# Alert when things seem to to take too long
+
+milemarker.increment_and_on_batch do |milemarker|
+  secs = milemarker.last_batch_seconds
+  if secs > way_too_long
+    logger.error "Whoa: #{secs} is too long for a batch of #{milemarker.batch_size}"
+  end
+end
+
+# #on_batch and #increment_and_on_batch can be used to do real (i.e., 
+# non-logging) work after every `batch` calls, too
+queue = []
+my_stuff.each do |doc|
+  queue << do_something_to(doc)
+  milemarker.increment_and_on_batch do |milemarker|
+    write_to_datastore(queue)
+    queue = []
+    logger.info milemarker.batch_line
+  end
+end
+```
+
+`#incr` and `#on_batch(&blk)` are also available separately if you need to be
+more explicit and less atomic.
+
+All the components that make up a batch_line (e.g., the records/second as 
+a nice string) are available to roll your own batch line. See the API 
+documentation for details. 
+
+### Incorporating a logger into milemarker
+
+For standard logging cases, you can also pass in a logger, or let milemarker
 create one for its own use based on an IO-like object you provide
 
 ```ruby
 logger = Logger.new(STDERR)
-wp = Waypoint.new(name: 'my_process', batch_size: 10_000, logger: logger)
+milemarker     = Milemarker.new(name: 'my_process', batch_size: 10_000, logger: logger)
 
 # same thing
-wp = Waypoint.new(name: 'my_process', batch_size: 10_000)
-wp.logger = logger
+milemarker        = Milemarker.new(name: 'my_process', batch_size: 10_000)
+milemarker.logger = logger
 
-# same thing
-wp = Waypoint.new(name: 'my_process', batch_size: 10_000)
-wp.create_logger!(STDERR)
+# same thing again
+milemarker = Milemarker.new(name: 'my_process', batch_size: 10_000)
+milemarker.create_logger!(STDERR)
 
 File.open(input_file).each do |line|
   do_whatever_needs_doing(line)
-  wp.increment_and_log # same as wp.on_batch { logger.info wp.batch_line}
+  milemarker.increment_and_log_batch_line
 end
 
 ```
 
-### Structured logging
+### Structured logging with Milemarker::Structured
 
-`Waypoint::Structured` will return hashes for `#batch_line` and `#final_line`
+`Milemarker::Structured` will return hashes for `#batch_line` and `#final_line`
 (aliased to `#batch_data` and `#final_data`, respectively) and pass those
-hashes along to whatever logger you provide. `#create_logger!` will create
-a logger that provides json lines instead of text, too.
+hashes along to whatever logger you provide. `#create_logger!` for this
+subclass will create a logger that provides json lines instead of text, too.
 
-Presumably, if you pass in a logger you'll use something like
-[semantic_logger](https://github.com/reidmorrison/semantic_logger) 
+Presumably, if you pass in your own logger you'll use something like
+[semantic_logger](https://github.com/reidmorrison/semantic_logger)
 or [ougai](https://github.com/tilfin/ougai).
 
 ```ruby
-wp = Waypoint::Structured.new(name: 'my_process', batch_size: 10_000)
-wp.create_logger!(STDERR)
+milemarker = Milemarker::Structured.new(name: 'my_process', batch_size: 10_000)
+milemarker.create_logger!(STDERR)
 
 File.open(input_file).each do |line|
   do_whatever_needs_doing(line)
-  wp.increment_and_log
+  milemarker.increment_and_log_batch_line
 end
 
 # Usually one line; broken up for readability
@@ -84,37 +132,35 @@ end
 
 ```
 
-## Non-logging uses
+## Threadsafety
 
-Note that since `wp.on_batch { block }` simply fires whenever `batch_size`
-calls to `#incr` have been recorded,  There's no reason one can't use this
-to, say, send a collected batch of data to a database.
+A call to `milemaker.threadsafify!` will wrap `increment_and_on_batch` (and
+`increment_and_log_batch_line`) to be a threadsafe atomic operation at the 
+cost of some 
+performance. 
+
+## Turning off logging
+
+If the logger is set to `nil`, no logging will occur.
 
 ```ruby
-accum = []
-File.open(input_file).each do |line|
-  accum << transform_line(line)
-  wp.incr
-  wp.on_batch do
-    send_to_database(accum)
-    accum = []
-  end
-end
+# Turn off logging
 
+milemarker.logger = nil
 ```
 
 ## Accuracy
 
-Note that `Waypoint` isn't designed for real benchmarking. 
-The assumption is that whatever work your code is actually
-doing will drown out any inefficiencies in the `Waypoint` code.
+Note that `milemarker` isn't designed for real benchmarking. The assumption is
+that whatever work your code is actually doing will drown out any
+inefficiencies in the `milemarker` code.
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'waypoint'
+gem 'milemarker'
 ```
 
 And then execute:
@@ -123,19 +169,15 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install waypoint
+    $ gem install milemarker
 
-
-## Development
-
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
-
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/billdueber/waypoint.
+Bug reports and pull requests are welcome on GitHub
+at https://github.com/billdueber/milemarker.
 
 ## License
 
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+The gem is available as open source under the terms of
+the [MIT License](https://opensource.org/licenses/MIT).

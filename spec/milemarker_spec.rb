@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-RSpec.describe Waypoint do
+RSpec.describe Milemarker do
   it "has a version number" do
-    expect(Waypoint::VERSION).not_to be nil
+    expect(Milemarker::VERSION).not_to be nil
   end
 
   it "does something useful" do

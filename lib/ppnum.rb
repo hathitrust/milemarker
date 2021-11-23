@@ -2,8 +2,8 @@
 
 # WHAT? Defining a global function? Yup.
 #
-# "Pretty print" a number into an underscore-delimited number
-# right-space-padded out to the specifified width (default 0 indicating
+# "Pretty print" a number into an underscore-delimited numeric string,
+# right-space-padded out to the specified width (default 0 indicating
 # "no padding") and with the specified number of digits to the right
 # of the decimal point (default again 0, meaning no decimal point at all)
 #
@@ -13,6 +13,10 @@
 #
 # No attempt is made to deal gracefully with numbers that overrun the
 # specified width
+# @param [Numeric] i the number to format
+# @param [Integer] width The width to target
+# @param [Integer] decimals Number of decimal places to show
+# @return [String] The formatted number
 def ppnum(i, width = 0, decimals = 0)
   dec_str = if decimals.zero?
     ""
