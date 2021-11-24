@@ -3,13 +3,13 @@
 require_relative "lib/milemarker/version"
 
 Gem::Specification.new do |spec|
-  spec.name          = "waypoint"
+  spec.name          = "milemarker"
   spec.version       = Milemarker::VERSION
   spec.authors       = ["Bill Dueber"]
   spec.email         = ["bill@dueber.com"]
 
   spec.summary       = "Track and produce loglines for batch processing progress."
-  spec.homepage      = "https://github.com/billdueber/waypoint"
+  spec.homepage      = "https://github.com/billdueber/milemarker"
   spec.license       = "MIT"
   spec.required_ruby_version = Gem::Requirement.new(">= 2.4.0")
 
