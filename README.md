@@ -1,4 +1,4 @@
-# Waypoint -- track (and presumably log) progress in batch jobs
+# Milemarker -- track (and presumably log) progress in batch jobs
 
 Never again write code of the form `log.info "Finished 1_000 in # {secs} 
 seconds at a rate of #{total / secs}"`. 
