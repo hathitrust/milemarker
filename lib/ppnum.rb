@@ -9,21 +9,22 @@
 #
 # Example: ppnum(10111) => "10_111"
 #          ppnum(1234.56) => 1_235
-#          ppnum(10111.3456, 10, 1) => "  10_111.3"
+#          ppnum(10111.3656, 10, 1) => "  10_111.4"
 #
 # No attempt is made to deal gracefully with numbers that overrun the
 # specified width
-# @param [Numeric] i the number to format
+# @param [Numeric] num the number to format
 # @param [Integer] width The width to target
 # @param [Integer] decimals Number of decimal places to show
 # @return [String] The formatted number
-def ppnum(i, width = 0, decimals = 0)
+def ppnum(num, width = 0, decimals = 0)
+  num = num.round(decimals)
   dec_str = if decimals.zero?
     ""
   else
-    ".#{format("%.#{decimals}f", i).split(".").last}"
+    ".#{format("%.#{decimals}f", num).split(".").last}"
   end
-  numstr = i.floor.to_s.reverse.split(/(...)/)
+  numstr = num.floor.to_s.reverse.split(/(...)/)
     .reject(&:empty?)
     .map(&:reverse)
     .reverse

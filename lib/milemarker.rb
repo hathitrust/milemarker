@@ -7,6 +7,7 @@ require 'json'
 
 # milemarker class, to keep track of progress over time for long-running
 # iterating processes
+#
 # @author Bill Dueber <bill@dueber.com>
 class Milemarker
 
@@ -45,6 +46,9 @@ class Milemarker
   attr_reader :prev_count
 
   # Create a new milemarker tracker, with an optional name and logger
+  # @param [Integer] batch_size How often the on_batch block will be called
+  # @param [String] name Optional "name" for this milemarker, included in the generated log lines
+  # @param [Logger, #info, #warn] Optional logger that responds to the normal #info, #warn, etc.
   def initialize(batch_size: 1000, name: nil, logger: nil)
     @batch_size = batch_size
     @name       = name
@@ -80,7 +84,10 @@ class Milemarker
     self
   end
 
+  alias_method :increment, :incr
+
   # Create a logger for use in logging milemaker information
+  # @example mm.create_logger!(STDOUT)
   # @return [Milemarker] self
   def create_logger!(*args, **kwargs)
     @logger = Logger.new(*args, **kwargs)
@@ -120,12 +127,12 @@ class Milemarker
   # Log the batch line, as described in #batch_line
   # @param [Symbol] level The level to log at
   def log_batch_line(level: :info)
-    on_batch { log(batch_line, level: level) }
+    log(batch_line, level: level)
   end
 
   # Log the final line, as described in #final_line
   # @param [Symbol] level The level to log at
-  def log_final_line(level: info)
+  def log_final_line(level: :info)
     log(final_line, level: level)
   end
 
@@ -137,6 +144,17 @@ class Milemarker
     "#{name} #{ppnum(count, 10)}. This batch #{ppnum(last_batch_size, 5)} in #{ppnum(last_batch_seconds, 4, 1)}s (#{batch_rate_str} r/s). Overall #{total_rate_str} r/s."
     # rubocop:enable Layout/LineLength
   end
+
+  # Record how many increments there have been since the last on_batch call.
+  # Most useful to count how many items are in the final (usually incomplete) batch
+  # Note that since Milemarker can't tell when you're done processing, you can call this
+  # anytime and get the number of items processed since the last on_batch call.
+  # @return [Integer] Number of items processed in the final batch
+  def final_batch_size
+    count - prev_count
+  end
+
+  alias_method :batch_count_so_far, :final_batch_size
 
   # A line describing the entire run, suitable for logging, of the form
   #   load records.ndj FINISHED. 27_138_118 total records in 00h 12m 39s. Overall 35_718 r/s.
@@ -164,15 +182,15 @@ class Milemarker
   end
 
   # Total seconds since the beginning of this milemarker
-  # @return [Numeric] seconds since the milemarker was created
+  # @return [Float] seconds since the milemarker was created
   def total_seconds_so_far
     Time.now - start_time
   end
 
   # Total seconds since this batch started
-  # @return [Numeric] seconds since the beginning of this batch
+  # @return [Float] seconds since the beginning of this batch
   def batch_seconds_so_far
-    Time.now = batch_start_time
+    Time.now - batch_start_time
   end
 
   # Set/reset all the internal state. Called by #on_batch when necessary;
