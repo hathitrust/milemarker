@@ -18,7 +18,8 @@ class Milemarker
     #   * a Hash will just be passed
     #   * a String;s return json will show up in the hash under the key 'msg'
     #   * an Exception's return json will have the error's message, class, the first bit of the backtrace, and hostname
-    #   * Anything else will be treated like a hash if it reponds to #to_h; otherwise use msg.inspect as a message string
+    #   * Anything else will be treated like a hash if it responds to #to_h;
+    #     otherwise use msg.inspect as a message string
     def create_logger!(*args, **kwargs)
       super
       @logger.formatter = proc do |severity, datetime, _progname, msg|
@@ -28,13 +29,9 @@ class Milemarker
         when String
           { msg: msg }
         when Exception
-          { msg: msg.message, error: msg.class, at: msg.backtrace&.first, hostname: Socket.gethostname }
+          exception_message_hash(msg)
         else
-          if msg.respond_to? :to_h
-            msg.to_h
-          else
-            { msg: msg.inspect }
-          end
+          other_message_hash(msg)
         end.merge({ level: severity, time: datetime }).to_json
       end
       self
@@ -46,10 +43,10 @@ class Milemarker
         name: name,
         batch_count: last_batch_size,
         batch_seconds: last_batch_seconds,
-        batch_rate: count.zero? ? 0 : last_batch_size.to_f / last_batch_seconds,
+        batch_rate: batch_rate,
         total_count: count,
         total_seconds: total_seconds_so_far,
-        total_rate: count.zero? ? 0 : count.to_f / total_seconds_so_far
+        total_rate: total_rate
       }
     end
 
@@ -62,10 +59,22 @@ class Milemarker
         final_batch_size: final_batch_size,
         total_count: count,
         total_seconds: total_seconds_so_far,
-        total_rate: count.zero? ? 0 : count.to_f / total_seconds_so_far
+        total_rate: total_rate
       }
     end
 
     alias final_data final_line
+
+    def exception_message_hash(msg)
+      { msg: msg.message, error: msg.class, at: msg.backtrace&.first, hostname: Socket.gethostname }
+    end
+
+    def other_message_hash(msg)
+      if msg.respond_to? :to_h
+        msg.to_h
+      else
+        { msg: msg.inspect }
+      end
+    end
   end
 end

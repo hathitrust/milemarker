@@ -4,6 +4,7 @@ require_relative "ppnum"
 require 'logger'
 require 'socket'
 require 'json'
+require 'milemarker/structured'
 
 # milemarker class, to keep track of progress over time for long-running
 # iterating processes
@@ -164,22 +165,32 @@ class Milemarker
     # rubocop:enable Layout/LineLength
   end
 
+  # @return [Float] rate of the last batch (in recs/second)
+  def batch_rate
+    return 0.0 if count.zero?
+
+    last_batch_size.to_f / last_batch_seconds
+  end
+
   # @param [Integer] decimals Number of decimal places to the right of the
   #   decimal point
   # @return [String] Rate-per-second in form XXX.YY
   def batch_rate_str(decimals = 0)
-    return "0" if @count.zero?
+    ppnum(batch_rate, 0, decimals)
+  end
 
-    ppnum(last_batch_size.to_f / last_batch_seconds, 0, decimals)
+  # @return [Float] total rate so far (in rec/second)
+  def total_rate
+    return 0.0 if @count.zero?
+
+    count / total_seconds_so_far
   end
 
   # @param [Integer] decimals Number of decimal places to the right of the
   #   decimal point
   # @return [String] Rate-per-second in form XXX.YY
   def total_rate_str(decimals = 0)
-    return "0" if @count.zero?
-
-    ppnum(count / total_seconds_so_far, 0, decimals)
+    ppnum(total_rate, 0, decimals)
   end
 
   # Total seconds since the beginning of this milemarker
@@ -216,7 +227,7 @@ class Milemarker
   # @param [String] msg The message to log
   # @param [Symbol] level The level to log at
   def log(msg, level: :info)
-    logger.send(level, msg) if logger
+    logger&.send(level, msg)
   end
 
   private

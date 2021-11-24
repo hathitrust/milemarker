@@ -54,3 +54,11 @@ RSpec.describe Milemarker do
     expect { mm.log_final_line }.to output(r).to_stdout_from_any_process
   end
 end
+
+RSpec.describe Milemarker::Structured do
+  it "produces a structured line" do
+    mm = basic_structured_mm(5, 12) {}
+    expect(mm.batch_line[:total_rate]).to be > 0.0
+    expect(mm.final_line[:total_rate]).to be > 0.0
+  end
+end

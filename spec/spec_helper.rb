@@ -26,5 +26,16 @@ def basic_mm(batch_size, count, &blk)
   mm
 end
 
+# @param [Integer] batch_size
+# @param [Integer] count
+# @return [Milemarker::Structured]
+def basic_structured_mm(batch_size, count, &blk)
+  mm = Milemarker::Structured.new(batch_size: batch_size)
+  (1..count).each do |i|
+    mm.increment_and_on_batch { blk.call(i, mm) }
+  end
+  mm
+end
+
 # Use the form
 # expect { print('foo') }.to output(/foo/).to_stdout
