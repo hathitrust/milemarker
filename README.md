@@ -13,8 +13,7 @@ require 'logger'
 input_file = "records.ndj"
 
 # Create a new milemarker. Default batch_size is 1_000
-milemarker     = Milemarker.new(name: "Load #{input_file}", batch_size: 
-  1_000_000)
+milemarker     = Milemarker.new(name: "Load #{input_file}", batch_size: 1_000_000)
 logger = Logger.new(STDERR)
 
 File.open(input_file).each do |line|
@@ -41,15 +40,15 @@ The primary way most programs will use `milemarker` is via
 
 * increment the batch counter
 * If the batch counter >= the batch size:
-  * run the provided block
-  * reset the batch count/time/etc.
+  * run the provided block (or write the logline)
+  * reset count/time/etc for the next batch
 
 Some examples:
 
 ```ruby
 
 # Logging, as above
-milemarker = Milemarker.new(batch_size: 1000, name: 'Logging')
+milemarker = Milemarker.new(batch_size: 1000, name: 'Load myfile')
 milemarker.increment_and_on_batch { logger.info milemarker.batch_line }
 
 # Alert when things seem to to take too long
