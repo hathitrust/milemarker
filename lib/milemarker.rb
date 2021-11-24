@@ -10,7 +10,6 @@ require 'json'
 #
 # @author Bill Dueber <bill@dueber.com>
 class Milemarker
-
   # @return [String] optional "name" of this milemarker, for logging purposes
   attr_accessor :name
 
@@ -84,7 +83,7 @@ class Milemarker
     self
   end
 
-  alias_method :increment, :incr
+  alias increment incr
 
   # Create a logger for use in logging milemaker information
   # @example mm.create_logger!(STDOUT)
@@ -108,7 +107,7 @@ class Milemarker
     incr.on_batch(&blk)
   end
 
-  alias_method :increment_and_on_batch, :_increment_and_on_batch
+  alias increment_and_on_batch _increment_and_on_batch
 
   # Threadsafe version of #increment_and_on_batch, doing the whole thing as a single atomic action
   def threadsafe_increment_and_on_batch(&blk)
@@ -154,7 +153,7 @@ class Milemarker
     count - prev_count
   end
 
-  alias_method :batch_count_so_far, :final_batch_size
+  alias batch_count_so_far final_batch_size
 
   # A line describing the entire run, suitable for logging, of the form
   #   load records.ndj FINISHED. 27_138_118 total records in 00h 12m 39s. Overall 35_718 r/s.
@@ -170,6 +169,7 @@ class Milemarker
   # @return [String] Rate-per-second in form XXX.YY
   def batch_rate_str(decimals = 0)
     return "0" if @count.zero?
+
     ppnum(last_batch_size.to_f / last_batch_seconds, 0, decimals)
   end
 
@@ -178,6 +178,7 @@ class Milemarker
   # @return [String] Rate-per-second in form XXX.YY
   def total_rate_str(decimals = 0)
     return "0" if @count.zero?
+
     ppnum(count / total_seconds_so_far, 0, decimals)
   end
 
@@ -211,17 +212,12 @@ class Milemarker
     @batch_number = batch_divisor
   end
 
-
   # Log a line using the internal logger. Do nothing if no logger is configured.
   # @param [String] msg The message to log
   # @param [Symbol] level The level to log at
   def log(msg, level: :info)
-    if logger
-      logger.send(level, msg)
-    end
+    logger.send(level, msg) if logger
   end
-
-
 
   private
 
@@ -239,5 +235,3 @@ class Milemarker
     format("%02dh %02dm %02ds", hours, minutes, secs)
   end
 end
-
-

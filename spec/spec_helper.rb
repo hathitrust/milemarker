@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative  "../lib/milemarker"
+require_relative "../lib/milemarker"
 require_relative '../lib/ppnum'
 
 RSpec.configure do |config|

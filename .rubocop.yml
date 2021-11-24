@@ -1,12 +1,12 @@
-AllCops:
-  TargetRubyVersion: 2.4
+AllCops: 
+  TargetRubyVersion: 2.7
 
 Style/StringLiterals:
-  Enabled: true
+  Enabled: false
   EnforcedStyle: double_quotes
 
 Style/StringLiteralsInInterpolation:
-  Enabled: true
+  Enabled: false
   EnforcedStyle: double_quotes
 
 Layout/LineLength:

@@ -20,15 +20,15 @@
 def ppnum(num, width = 0, decimals = 0)
   num = num.round(decimals)
   dec_str = if decimals.zero?
-    ""
-  else
-    ".#{format("%.#{decimals}f", num).split(".").last}"
-  end
+              ""
+            else
+              ".#{format("%.#{decimals}f", num).split(".").last}"
+            end
   numstr = num.floor.to_s.reverse.split(/(...)/)
-    .reject(&:empty?)
-    .map(&:reverse)
-    .reverse
-    .join("_") + dec_str
+              .reject(&:empty?)
+              .map(&:reverse)
+              .reverse
+              .join("_") + dec_str
   if width.zero?
     numstr
   else
