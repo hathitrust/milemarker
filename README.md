@@ -1,4 +1,4 @@
-# Milemarker -- track (and usually log) progress in batch jobs
+# Milemarker -- track (and probably log) progress in batch jobs
 
 Never again write code of the
 form `log.info "Finished 1_000 in #{secs} seconds at a rate of #{total.to_f / secs}"`
