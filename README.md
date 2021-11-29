@@ -16,21 +16,20 @@ input_file = "records.ndj"
 milemarker     = Milemarker.new(name: "Load #{input_file}", batch_size: 1_000_000)
 logger = Logger.new(STDERR)
 
-File.open(input_file).each do |line|
-  do_whatever_needs_doing(line)
-  milemarker.increment_and_on_batch { logger.info milemarker.batch_line }
-end
-
-## Identical to the above, but let milemarker take care of the logger
 milemarker.logger = logger
+
 File.open(input_file).each do |line|
   do_whatever_needs_doing(line)
   milemarker.increment_and_log_batch_line
 end
+milemarker.log_final_line # if logging is set up
 
-
+# Identical to the above, but do the logging "by hand"
+File.open(input_file).each do |line|
+  do_whatever_needs_doing(line)
+  milemarker.increment_and_on_batch { logger.info milemarker.batch_line }
+end
 logger.info milemarker.final_line
-# or milemarker.log_final_line
 
 # Sample output
 # ...
@@ -43,9 +42,10 @@ logger.info milemarker.final_line
 
 ## Basic usage
 
-The primary way most programs will use `milemarker` is via
-`#increment_and_on_batch {|milemarker| ... }` (or its counterpart 
-`#increment_and_log_batch_line`). As the name suggests, this will:
+Most programs will probably use `milemarker` is via
+`#increment_and_log_batch_line`
+(or its counterpart `#increment_and_on_batch {|milemarker| ... }` ). As 
+the name suggests, this will:
 
 * increment the batch counter
 * If the batch counter >= the batch size:
