@@ -21,7 +21,16 @@ File.open(input_file).each do |line|
   milemarker.increment_and_on_batch { logger.info milemarker.batch_line }
 end
 
+## Identical to the above, but let milemarker take care of the logger
+milemarker.logger = logger
+File.open(input_file).each do |line|
+  do_whatever_needs_doing(line)
+  milemarker.increment_and_log_batch_line
+end
+
+
 logger.info milemarker.final_line
+# or milemarker.log_final_line
 
 # Sample output
 # ...
@@ -102,6 +111,11 @@ File.open(input_file).each do |line|
   milemarker.increment_and_log_batch_line
 end
 
+milemarker.log_final_line
+
+# All the logging methods take an optional :level argument
+milemarker.log_final_line(level: :debug)
+
 ```
 
 ### Structured logging with Milemarker::Structured
@@ -135,8 +149,12 @@ end
 
 A call to `milemaker.threadsafify!` will wrap `increment_and_on_batch` (and
 `increment_and_log_batch_line`) to be a threadsafe atomic operation at the 
-cost of some 
-performance. 
+cost of some performance. 
+
+```
+milemarker.threadsafify!
+
+```
 
 ## Turning off logging
 
@@ -148,11 +166,20 @@ If the logger is set to `nil`, no logging will occur.
 milemarker.logger = nil
 ```
 
+You could also just configure your logger to ignore stuff
+
+```ruby
+
+milemarker.logger.level = :error
+
+```
+
 ## Accuracy
 
 Note that `milemarker` isn't designed for real benchmarking. The assumption is
 that whatever work your code is actually doing will drown out any
-inefficiencies in the `milemarker` code.
+inefficiencies in the `milemarker` code, and milemarker numbers can be used to suss out 
+where weird things are happening. 
 
 ## Installation
 
