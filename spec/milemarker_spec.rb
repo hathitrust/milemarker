@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'spec_helper'
+require_relative "spec_helper"
 
 RSpec.describe Milemarker do
   it "has a version number" do
@@ -9,13 +9,13 @@ RSpec.describe Milemarker do
 
   it "triggers on on_batch" do
     triggers = []
-    mm = basic_mm(5, 12) { |i, _mm| triggers << i }
+    basic_mm(5, 12) { |i, _mm| triggers << i }
     expect(triggers).to contain_exactly(5, 10)
   end
 
   it "time marches forward" do
     times = []
-    mm = basic_mm(5, 12) { |_i, mm| times << mm.total_seconds_so_far }
+    basic_mm(5, 12) { |_i, mm| times << mm.total_seconds_so_far }
     expect(times.size).to eq(2)
     expect(times.last).to be > times.first
   end
@@ -32,7 +32,7 @@ RSpec.describe Milemarker do
 
   it "outputs batch log lines as expected" do
     mm = Milemarker.new(batch_size: 5)
-    mm.create_logger!(STDOUT)
+    mm.create_logger!($stdout)
     r = /INFO.*?5\.\s+This batch\s+5.*?INFO.*?10\.\s+This batch\s+5/m
     expect { (1..12).each { |_i| mm.increment_and_log_batch_line } }.to output(r).to_stdout_from_any_process
   end
@@ -49,7 +49,7 @@ RSpec.describe Milemarker do
 
   it "puts out a reasonable final batch log line" do
     mm = basic_mm(5, 12) {}
-    mm.create_logger!(STDOUT)
+    mm.create_logger!($stdout)
     r = / FINISHED\.\s+12 total records/
     expect { mm.log_final_line }.to output(r).to_stdout_from_any_process
   end

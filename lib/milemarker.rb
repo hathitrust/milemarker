@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 require_relative "ppnum"
-require 'logger'
-require 'socket'
-require 'json'
-require 'milemarker/structured'
+require "logger"
+require "socket"
+require "json"
+require "milemarker/structured"
 
 # milemarker class, to keep track of progress over time for long-running
 # iterating processes
@@ -51,18 +51,18 @@ class Milemarker
   # @param [Logger, #info, #warn] Optional logger that responds to the normal #info, #warn, etc.
   def initialize(batch_size: 1000, name: nil, logger: nil)
     @batch_size = batch_size
-    @name       = name
-    @logger     = logger
+    @name = name
+    @logger = logger
 
     @batch_number = 0
-    @last_batch_size    = 0
+    @last_batch_size = 0
     @last_batch_seconds = 0
 
-    @start_time       = Time.now
+    @start_time = Time.now
     @batch_start_time = @start_time
-    @batch_end_time   = @start_time
+    @batch_end_time = @start_time
 
-    @count      = 0
+    @count = 0
     @prev_count = 0
   end
 
@@ -84,7 +84,7 @@ class Milemarker
     self
   end
 
-  alias increment incr
+  alias_method :increment, :incr
 
   # Create a logger for use in logging milemaker information
   # @example mm.create_logger!(STDOUT)
@@ -108,7 +108,7 @@ class Milemarker
     incr.on_batch(&blk)
   end
 
-  alias increment_and_on_batch _increment_and_on_batch
+  alias_method :increment_and_on_batch, :_increment_and_on_batch
 
   # Threadsafe version of #increment_and_on_batch, doing the whole thing as a single atomic action
   def threadsafe_increment_and_on_batch(&blk)
@@ -154,7 +154,7 @@ class Milemarker
     count - prev_count
   end
 
-  alias batch_count_so_far final_batch_size
+  alias_method :batch_count_so_far, :final_batch_size
 
   # A line describing the entire run, suitable for logging, of the form
   #   load records.ndj FINISHED. 27_138_118 total records in 00h 12m 39s. Overall 35_718 r/s.
@@ -208,8 +208,8 @@ class Milemarker
   # Set/reset all the internal state. Called by #on_batch when necessary;
   # should probably not be called manually
   def set_milemarker!
-    @batch_end_time     = Time.now
-    @last_batch_size    = @count - @prev_count
+    @batch_end_time = Time.now
+    @last_batch_size = @count - @prev_count
     @last_batch_seconds = @batch_end_time - @batch_start_time
 
     reset_for_next_batch!
@@ -218,8 +218,8 @@ class Milemarker
   # Reset the internal counters/timers at the end of a batch. Taken care of
   # by #on_batch; should probably not be called manually.
   def reset_for_next_batch!
-    @batch_start_time  = batch_end_time
-    @prev_count        = count
+    @batch_start_time = batch_end_time
+    @prev_count = count
     @batch_number = batch_divisor
   end
 
@@ -242,7 +242,7 @@ class Milemarker
 
   def seconds_to_time_string(sec)
     hours, leftover = sec.divmod(3600)
-    minutes, secs   = leftover.divmod(60)
+    minutes, secs = leftover.divmod(60)
     format("%02dh %02dm %02ds", hours, minutes, secs)
   end
 end

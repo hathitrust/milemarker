@@ -27,12 +27,12 @@ class Milemarker
         when Hash
           msg
         when String
-          { msg: msg }
+          {msg: msg}
         when Exception
           exception_message_hash(msg)
         else
           other_message_hash(msg)
-        end.merge({ level: severity, time: datetime }).to_json
+        end.merge({level: severity, time: datetime}).to_json
       end
       self
     end
@@ -50,7 +50,7 @@ class Milemarker
       }
     end
 
-    alias batch_data batch_line
+    alias_method :batch_data, :batch_line
 
     # @return [Hash] hash with information about the last batch
     def final_line
@@ -63,17 +63,17 @@ class Milemarker
       }
     end
 
-    alias final_data final_line
+    alias_method :final_data, :final_line
 
     def exception_message_hash(msg)
-      { msg: msg.message, error: msg.class, at: msg.backtrace&.first, hostname: Socket.gethostname }
+      {msg: msg.message, error: msg.class, at: msg.backtrace&.first, hostname: Socket.gethostname}
     end
 
     def other_message_hash(msg)
       if msg.respond_to? :to_h
         msg.to_h
       else
-        { msg: msg.inspect }
+        {msg: msg.inspect}
       end
     end
   end
