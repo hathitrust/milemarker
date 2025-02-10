@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../lib/milemarker"
-require_relative '../lib/ppnum'
+require_relative "../lib/ppnum"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
